@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Customer Churn Prediction Dashboard - Real-time ML analytics, customer explorer, and churn probability predictor powered by FastAPI.">
+  <title>Customer Churn Prediction Dashboard</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css?v=5">
+</head>
+<body>
+
+  <!-- =========================================================================
+       Header & Navigation
+       ========================================================================= -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+            <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Customer Churn Prediction</h1>
+          <p>Machine Learning Intelligence & Retention Analytics</p>
+        </div>
+      </div>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-menu">
+          <li><a href="#overview" class="nav-link active">Overview</a></li>
+          <li><a href="#analytics" class="nav-link">Analytics</a></li>
+          <li><a href="#customers" class="nav-link">Customers</a></li>
+          <li><a href="#predict" class="nav-link">Predict Churn</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-status" id="backend-status-pill" title="Status of FastAPI backend connection">
+        <span class="status-dot" id="status-indicator"></span>
+        <span id="status-text">Checking backend...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="main-content">
+
+    <!-- Global Alert Container for API status or errors -->
+    <div id="global-alert-container"></div>
+
+    <!-- =========================================================================
+         Section 1: Overview (KPI Statistics)
+         ========================================================================= -->
+    <section id="overview" class="dashboard-section" aria-labelledby="overview-heading">
+      <div class="section-header">
+        <div>
+          <h2 id="overview-heading" class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Churn Overview
+          </h2>
+          <p class="section-subtitle">Real-time portfolio metrics from the customer database</p>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <!-- Card 1: Total Customers -->
+        <div class="kpi-card total">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Total Customers</span>
+            <div class="kpi-icon-wrap" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="kpi-value" id="kpi-total-customers">--</div>
+          <div class="kpi-card-footer">
+            <span>Portfolio size</span>
+            <span class="kpi-badge badge-neutral">Database</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Churned Customers -->
+        <div class="kpi-card churned">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Churned Customers</span>
+            <div class="kpi-icon-wrap" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="18" y1="8" x2="23" y2="13"></line>
+                <line x1="23" y1="8" x2="18" y2="13"></line>
+              </svg>
+            </div>
+          </div>
+          <div class="kpi-value" id="kpi-churned-customers">--</div>
+          <div class="kpi-card-footer">
+            <span>Lost accounts</span>
+            <span class="kpi-badge badge-danger">At Risk</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Retained Customers -->
+        <div class="kpi-card retained">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Retained Customers</span>
+            <div class="kpi-icon-wrap" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <polyline points="17 11 19 13 23 9"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="kpi-value" id="kpi-retained-customers">--</div>
+          <div class="kpi-card-footer">
+            <span>Active accounts</span>
+            <span class="kpi-badge badge-success">Retained</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Churn Rate -->
+        <div class="kpi-card rate">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Churn Rate</span>
+            <div class="kpi-icon-wrap" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
+          </div>
+          <div class="kpi-value" id="kpi-churn-rate">--%</div>
+          <div class="kpi-card-footer">
+            <span>Historical ratio</span>
+            <span class="kpi-badge badge-warning" id="kpi-rate-tag">Target &lt; 25%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         Section 2: Analytics (Pattern Charts)
+         ========================================================================= -->
+    <section id="analytics" class="dashboard-section" aria-labelledby="analytics-heading">
+      <div class="section-header">
+        <div>
+          <h2 id="analytics-heading" class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            Churn Analytics
+          </h2>
+          <p class="section-subtitle">Visual analysis of churn drivers by contract type, tenure duration, and monthly spend</p>
+        </div>
+      </div>
+
+      <div class="analytics-grid">
+        <!-- Chart 1: Churn by Contract Type -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h3 class="chart-title">Churn by Contract Type</h3>
+              <p class="chart-desc">Comparison of retained vs churned customers</p>
+            </div>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="chart-contract" aria-label="Churn by Contract Type chart" role="img"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Churn by Tenure Group -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h3 class="chart-title">Churn by Tenure Group</h3>
+              <p class="chart-desc">Churn risk across customer lifespan tiers</p>
+            </div>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="chart-tenure" aria-label="Churn by Tenure Group chart" role="img"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 3: Avg Monthly Charges -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h3 class="chart-title">Avg Monthly Charges</h3>
+              <p class="chart-desc">Spend comparison between churned & retained users</p>
+            </div>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="chart-charges" aria-label="Average Monthly Charges chart" role="img"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         Section 3: Customer Data Explorer (Filterable Table)
+         ========================================================================= -->
+    <section id="customers" class="dashboard-section" aria-labelledby="customers-heading">
+      <div class="section-header">
+        <div>
+          <h2 id="customers-heading" class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Customer Records Explorer
+          </h2>
+          <p class="section-subtitle">Search, filter, and inspect customer profiles with one-click prediction testing</p>
+        </div>
+      </div>
+
+      <div class="customer-card">
+        <!-- Toolbar: Search, Filters, Refresh, Horizontal Scroll, Export -->
+        <div class="customer-toolbar">
+          <div class="toolbar-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="customer-search-input" placeholder="Search customers (ID, contract, plan...)" aria-label="Search customers">
+            <button type="button" id="btn-clear-search" class="btn-clear-search" style="display:none;" title="Clear search">✕</button>
+          </div>
+
+          <div class="toolbar-filters">
+            <div class="filter-group">
+              <label for="churn-filter-select" class="filter-label">Status:</label>
+              <select id="churn-filter-select" class="select-filter" aria-label="Filter by churn status">
+                <option value="all">All Statuses</option>
+                <option value="Yes">Churned (Yes)</option>
+                <option value="No">Retained (No)</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="contract-filter-select" class="filter-label">Contract:</label>
+              <select id="contract-filter-select" class="select-filter" aria-label="Filter by contract">
+                <option value="all">All Contracts</option>
+                <option value="Month-to-month">Month-to-month</option>
+                <option value="One year">One year</option>
+                <option value="Two year">Two year</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="page-size-select" class="filter-label">Rows:</label>
+              <select id="page-size-select" class="select-filter" aria-label="Rows per page">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+
+            <!-- Scroll Helpers for Multi-Column Table -->
+            <div class="table-scroll-actions" title="Scroll through columns">
+              <button type="button" id="btn-scroll-left" class="btn-scroll-arrow" aria-label="Scroll table left" title="Scroll left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <button type="button" id="btn-scroll-right" class="btn-scroll-arrow" aria-label="Scroll table right" title="Scroll right">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Export to CSV -->
+            <button type="button" id="btn-export-csv" class="btn-refresh" title="Export current rows as CSV file">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Export CSV
+            </button>
+
+            <!-- Refresh Button -->
+            <button type="button" id="btn-refresh-table" class="btn-refresh" title="Reload customer records">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Container with Horizontal Scroll Support & All 21 Columns -->
+        <div class="table-responsive" id="table-scroll-container">
+          <table class="data-table" id="customer-table" aria-label="Customer list table">
+            <thead>
+              <tr>
+                <th scope="col" class="sticky-col-left" title="Unique Customer Identifier">Customer ID</th>
+                <th scope="col">Gender</th>
+                <th scope="col">Senior</th>
+                <th scope="col">Partner</th>
+                <th scope="col">Dependents</th>
+                <th scope="col">Tenure</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Multiple Lines</th>
+                <th scope="col">Internet</th>
+                <th scope="col">Online Security</th>
+                <th scope="col">Online Backup</th>
+                <th scope="col">Device Protection</th>
+                <th scope="col">Tech Support</th>
+                <th scope="col">Streaming TV</th>
+                <th scope="col">Streaming Movies</th>
+                <th scope="col">Contract</th>
+                <th scope="col">Paperless</th>
+                <th scope="col">Payment Method</th>
+                <th scope="col">Monthly Charges</th>
+                <th scope="col">Total Charges</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="sticky-col-right text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customer-table-body">
+              <!-- Dynamically populated rows or loading skeleton -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div class="table-footer">
+          <div class="table-info" id="table-pagination-info">
+            Loading customer records...
+          </div>
+          <div class="pagination-controls">
+            <button type="button" class="btn-page" id="btn-prev-page" disabled title="Previous page">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <span class="btn-page" id="current-page-indicator" style="pointer-events: none; border-color: var(--primary-500); color: var(--primary-600); font-weight: 700;">1</span>
+            <button type="button" class="btn-page" id="btn-next-page" disabled title="Next page">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         Section 4: Prediction Form & Live Risk Analysis
+         ========================================================================= -->
+    <section id="predict" class="dashboard-section" aria-labelledby="predict-heading">
+      <div class="section-header">
+        <div>
+          <h2 id="predict-heading" class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Customer Churn Prediction
+          </h2>
+          <p class="section-subtitle">Input customer demographics, subscriptions, and billing metrics to evaluate churn probability with the ML model</p>
+        </div>
+      </div>
+
+      <div class="predict-layout">
+        <!-- Form Column -->
+        <div class="predict-form-card">
+          <div class="preset-actions">
+            <div class="preset-buttons">
+              <span style="font-size: 0.8125rem; font-weight: 600; color: var(--slate-600);">Quick Presets:</span>
+              <button type="button" class="btn-preset" id="btn-load-high-risk" title="Pre-fill with a high-risk profile">High-Risk Profile</button>
+              <button type="button" class="btn-preset" id="btn-load-low-risk" title="Pre-fill with a loyal customer profile">Loyal Customer</button>
+            </div>
+            <button type="button" class="btn-reset-form" id="btn-clear-form" title="Clear form inputs">Clear Form</button>
+          </div>
+
+          <form id="churn-prediction-form" novalidate>
+            <!-- Fieldset 1: Account & Billing Information -->
+            <fieldset class="form-fieldset">
+              <legend class="fieldset-legend">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                  <line x1="2" y1="10" x2="22" y2="10"></line>
+                </svg>
+                Account & Billing Information
+              </legend>
+
+              <div class="fields-grid three-cols">
+                <!-- Tenure -->
+                <div class="form-group">
+                  <label for="tenure" class="form-label">Tenure (Months) <span class="req">*</span></label>
+                  <input type="number" id="tenure" name="tenure" class="form-control" min="0" step="1" placeholder="e.g. 12" required>
+                  <span class="form-helper">Months subscribed (min 0)</span>
+                </div>
+
+                <!-- Contract -->
+                <div class="form-group">
+                  <label for="Contract" class="form-label">Contract <span class="req">*</span></label>
+                  <select id="Contract" name="Contract" class="form-control" required>
+                    <option value="" disabled selected>Select contract type</option>
+                    <option value="Month-to-month">Month-to-month</option>
+                    <option value="One year">One year</option>
+                    <option value="Two year">Two year</option>
+                  </select>
+                  <span class="form-helper">Contract agreement terms</span>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="form-group">
+                  <label for="PaymentMethod" class="form-label">Payment Method <span class="req">*</span></label>
+                  <select id="PaymentMethod" name="PaymentMethod" class="form-control" required>
+                    <option value="" disabled selected>Select payment method</option>
+                    <option value="Electronic check">Electronic check</option>
+                    <option value="Mailed check">Mailed check</option>
+                    <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+                    <option value="Credit card (automatic)">Credit card (automatic)</option>
+                  </select>
+                  <span class="form-helper">Billing payment channel</span>
+                </div>
+              </div>
+
+              <div class="fields-grid three-cols">
+                <!-- Monthly Charges -->
+                <div class="form-group">
+                  <label for="MonthlyCharges" class="form-label">Monthly Charges ($) <span class="req">*</span></label>
+                  <input type="number" id="MonthlyCharges" name="MonthlyCharges" class="form-control" min="0" step="0.01" placeholder="e.g. 65.50" required>
+                  <span class="form-helper">Recurring monthly rate</span>
+                </div>
+
+                <!-- Total Charges -->
+                <div class="form-group">
+                  <label for="TotalCharges" class="form-label">Total Charges ($) <span class="req">*</span></label>
+                  <input type="number" id="TotalCharges" name="TotalCharges" class="form-control" min="0" step="0.01" placeholder="e.g. 786.00" required>
+                  <span class="form-helper">Cumulative billing spend</span>
+                </div>
+
+                <!-- Paperless Billing -->
+                <div class="form-group">
+                  <label for="PaperlessBilling" class="form-label">Paperless Billing <span class="req">*</span></label>
+                  <select id="PaperlessBilling" name="PaperlessBilling" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Receives electronic invoices</span>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- Fieldset 2: Demographics & Phone Services -->
+            <fieldset class="form-fieldset" style="margin-top: 1rem;">
+              <legend class="fieldset-legend">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Customer Demographics & Phone Services
+              </legend>
+
+              <div class="fields-grid">
+                <!-- Senior Citizen -->
+                <div class="form-group">
+                  <label for="SeniorCitizen" class="form-label">Senior Citizen <span class="req">*</span></label>
+                  <select id="SeniorCitizen" name="SeniorCitizen" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Customer is age 65 or older</span>
+                </div>
+
+                <!-- Partner -->
+                <div class="form-group">
+                  <label for="Partner" class="form-label">Partner <span class="req">*</span></label>
+                  <select id="Partner" name="Partner" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Customer has a domestic partner</span>
+                </div>
+
+                <!-- Dependents -->
+                <div class="form-group">
+                  <label for="Dependents" class="form-label">Dependents <span class="req">*</span></label>
+                  <select id="Dependents" name="Dependents" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Customer lives with dependents</span>
+                </div>
+
+                <!-- Phone Service -->
+                <div class="form-group">
+                  <label for="PhoneService" class="form-label">Phone Service <span class="req">*</span></label>
+                  <select id="PhoneService" name="PhoneService" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Active landline or VoIP phone service</span>
+                </div>
+
+                <!-- Multiple Lines -->
+                <div class="form-group">
+                  <label for="MultipleLines" class="form-label">Multiple Lines <span class="req">*</span></label>
+                  <select id="MultipleLines" name="MultipleLines" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Multiple phone line subscriptions</span>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- Fieldset 3: Internet & Security Services -->
+            <fieldset class="form-fieldset" style="margin-top: 1rem;">
+              <legend class="fieldset-legend">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                Internet & Value-Added Add-ons
+              </legend>
+
+              <div class="fields-grid three-cols">
+                <!-- Internet Service (Categorical Dropdown) -->
+                <div class="form-group">
+                  <label for="InternetService" class="form-label">Internet Service <span class="req">*</span></label>
+                  <select id="InternetService" name="InternetService" class="form-control" required>
+                    <option value="" disabled selected>Select internet service</option>
+                    <option value="DSL">DSL</option>
+                    <option value="Fiber optic">Fiber optic</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Internet connection technology</span>
+                </div>
+
+                <!-- Online Security -->
+                <div class="form-group">
+                  <label for="OnlineSecurity" class="form-label">Online Security <span class="req">*</span></label>
+                  <select id="OnlineSecurity" name="OnlineSecurity" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Cybersecurity & antivirus package</span>
+                </div>
+
+                <!-- Online Backup -->
+                <div class="form-group">
+                  <label for="OnlineBackup" class="form-label">Online Backup <span class="req">*</span></label>
+                  <select id="OnlineBackup" name="OnlineBackup" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Cloud storage and data backups</span>
+                </div>
+
+                <!-- Device Protection -->
+                <div class="form-group">
+                  <label for="DeviceProtection" class="form-label">Device Protection <span class="req">*</span></label>
+                  <select id="DeviceProtection" name="DeviceProtection" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Hardware insurance & warranty</span>
+                </div>
+
+                <!-- Tech Support -->
+                <div class="form-group">
+                  <label for="TechSupport" class="form-label">Tech Support <span class="req">*</span></label>
+                  <select id="TechSupport" name="TechSupport" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">Priority 24/7 technical assistance</span>
+                </div>
+
+                <!-- Streaming TV -->
+                <div class="form-group">
+                  <label for="StreamingTV" class="form-label">Streaming TV <span class="req">*</span></label>
+                  <select id="StreamingTV" name="StreamingTV" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">IPTV subscription package</span>
+                </div>
+
+                <!-- Streaming Movies -->
+                <div class="form-group">
+                  <label for="StreamingMovies" class="form-label">Streaming Movies <span class="req">*</span></label>
+                  <select id="StreamingMovies" name="StreamingMovies" class="form-control" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  <span class="form-helper">On-demand movie streaming</span>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- Form Error Feedback Container -->
+            <div id="form-validation-alert" style="display: none; margin-top: 1rem;"></div>
+
+            <!-- Submit Button -->
+            <div style="margin-top: 1.5rem;">
+              <button type="submit" id="btn-predict-submit" class="btn-submit-predict">
+                <span id="btn-predict-spinner" class="spinner" style="display: none;" aria-hidden="true"></span>
+                <span id="btn-predict-text">Predict Churn Risk</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Result Column -->
+        <div class="result-panel-wrapper">
+          <div class="result-card" id="prediction-result-card">
+            <div class="result-header">
+              <h3>Prediction Outcome</h3>
+              <span class="kpi-badge badge-neutral" id="result-timestamp-badge">Model Ready</span>
+            </div>
+
+            <!-- Standby View (Before First Prediction) -->
+            <div class="result-standby" id="result-standby-view">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <h4>No Prediction Yet</h4>
+              <p>Complete the customer details form or pick a preset profile to calculate churn risk.</p>
+            </div>
+
+            <!-- Active Result Content (Shown After Prediction) -->
+            <div class="result-content" id="result-active-view" style="display: none;">
+              <!-- Banner: Predicted Outcome -->
+              <div class="result-banner" id="result-outcome-banner">
+                <div class="banner-icon" id="result-icon-container">
+                  <!-- Injected via JS -->
+                </div>
+                <div class="banner-text">
+                  <h4 id="result-prediction-title">--</h4>
+                  <p id="result-prediction-subtitle">--</p>
+                </div>
+              </div>
+
+              <!-- Probability Metric Box -->
+              <div class="metric-box">
+                <div class="metric-header">
+                  <span class="metric-label">Churn Probability</span>
+                  <span class="metric-number" id="result-probability-text">--%</span>
+                </div>
+                <!-- Visual Meter / Progress Bar -->
+                <div class="progress-container" aria-label="Churn probability progress meter">
+                  <div class="progress-bar-fill" id="result-progress-fill" style="width: 0%;"></div>
+                </div>
+                <div class="risk-scale">
+                  <span>0% (Low Risk)</span>
+                  <span>50%</span>
+                  <span>100% (High Risk)</span>
+                </div>
+              </div>
+
+              <!-- Explanatory Note -->
+              <div class="explanation-note" id="result-explanation-text">
+                The machine learning model evaluated this customer profile against trained patterns to forecast likelihood of service cancellation.
+              </div>
+
+              <!-- Action to Test Another Profile -->
+              <button type="button" class="btn-refresh" id="btn-predict-another" style="width: 100%; justify-content: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="1 4 1 10 7 10"></polyline>
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                </svg>
+                Predict Another Customer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       Footer
+       ========================================================================= -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div>
+        <strong>Customer Churn Prediction System</strong> &mdash; FastAPI Backend &amp; Machine Learning Dashboard.
+      </div>
+      <div class="footer-links">
+        <a href="#overview">Overview</a>
+        <a href="#analytics">Analytics</a>
+        <a href="#customers">Customers</a>
+        <a href="#predict">Prediction Form</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       Customer Details Quick Inspection Modal
+       ========================================================================= -->
+  <div class="modal-backdrop" id="customer-modal-backdrop" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-customer-title">
+      <div class="modal-header">
+        <div class="modal-header-brand">
+          <div class="modal-avatar">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div>
+            <h3 id="modal-customer-title">Customer Profile</h3>
+            <p id="modal-customer-subtitle">Full 21 dataset features overview</p>
+          </div>
+        </div>
+        <div class="modal-header-actions">
+          <span id="modal-churn-badge" class="status-badge"></span>
+          <button type="button" class="btn-modal-close" id="btn-close-modal" aria-label="Close modal">✕</button>
+        </div>
+      </div>
+
+      <div class="modal-body" id="modal-customer-content">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-refresh" id="btn-modal-dismiss">Close</button>
+        <button type="button" class="btn-submit-predict" id="btn-modal-predict-action" style="width: auto; padding: 0.5rem 1.25rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Load & Test in Model
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <!-- Custom Application JavaScript -->
+  <script src="js/app.js?v=5"></script>
+</body>
+</html>
